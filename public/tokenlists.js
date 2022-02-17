@@ -56,9 +56,9 @@ function processList(list){
     existing.name = token.name;
     existing.symbol = token.symbol;
     existing.address = token.address;
-    existing.chainId = token.chainId;
-    existing.logoURI = token.logoURI;
     existing.decimals = token.decimals;
+    existing.logoURI = token.logoURI;
+    existing.chainId = token.chainId;
 
 
     if(!existing.lists) existing.lists = {};
