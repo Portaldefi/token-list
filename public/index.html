@@ -76,6 +76,7 @@ function processList(list){
 
     existing.lists[list.name] = {name:list.name};
     existing.name = token.name;
+    existing.chainId = token.chainId;
 
     allTokens[token.address] = existing;
   }
@@ -129,7 +130,7 @@ function rankTokens(){
       listsTexts.push(l);
     }
 
-    tokenInfo.innerHTML = "<b>"  + values[s].name + "</b> : " + Object.keys(values[s].lists).length + "(" + listsTexts.join(', ') + ")";
+    tokenInfo.innerHTML = "<b>"  + values[s].name + " (net:" + values[s].chainId + ")</b> " + Object.keys(values[s].lists).length + "(" + listsTexts.join(', ') + ")";
     ranked.appendChild(tokenInfo)
   }
 }
