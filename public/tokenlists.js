@@ -51,20 +51,20 @@ let allTokens = {};
 function processList(list){
   for(var t in list.tokens){
     let token = list.tokens[t];
-    let existing = allTokens[token.address] || {};
+    let existing = allTokens[token.address.toLowerCase()] || {};
 
     existing.name = token.name;
     existing.symbol = token.symbol;
     existing.address = token.address;
     existing.decimals = token.decimals;
-    existing.logoURI = token.logoURI;
+    if(!existing.logoURI && token.logoURI) existing.logoURI = token.logoURI;
     existing.chainId = token.chainId;
 
 
     if(!existing.lists) existing.lists = {};
     existing.lists[list.name] = true;//{name:list.name};
 
-    allTokens[token.address] = existing;
+    allTokens[token.address.toLowerCase()] = existing;
   }
 }
 
@@ -101,12 +101,27 @@ function rankTokens(chainId){
     values.push(allTokens[key]);
   }
 
+  for(var v in values){
+    let value = values[v];
+    //make lists array more compact
+    if(!(value.lists instanceof Array)){
+      value.lists = Object.keys(value.lists);
+      value.lists_length = value.lists.length;
+    }
+  }
+
+  if(chainId ==1) values = values.filter(x => x.lists.length >= 3);
+
+
   console.log("RANKING", values.length, "CHAIN", chainId)
 
+  console.log("SORTING");
+  let start = new Date();
   values.sort(function(firstEl, secondEl) {
     //console.log(Object.keys(firstEl.lists).length + " < " +  Object.keys(secondEl.lists).length)
-    return Object.keys(firstEl.lists).length < Object.keys(secondEl.lists).length ? 1 : -1
+    return firstEl.lists_length < secondEl.lists_length ? 1 : -1
   })
+  console.log("SORTED IN", (new Date() - start)/1000 )
 
   //console.log("SORTED", values);
 
@@ -161,11 +176,15 @@ function renderLists(lists){
 }
 
 function getLists(chainId, cb){
-  if(Object.keys(allTokens).length > 0){
-    console.log("USING CACHED TOKENS")
+  function done(){
     let ranked = rankTokens(chainId);
     console.log("RANKED", ranked.length)
     cb(ranked);
+  }
+
+  if(Object.keys(allTokens).length > 0){
+    console.log("USING CACHED TOKENS");
+    done();
     return;
   }
 
@@ -182,20 +201,17 @@ function getLists(chainId, cb){
     function loadList(i){
       if(!keys[i]){
         console.log("FINISHED LOADING LISTS")
-        //renderLists(tokenLists);
-
-        let ranked = rankTokens(chainId);
-        console.log("RANKED", ranked.length)
-        cb(ranked);
+        done();
         return;
       }
 
+      let list = lists[keys[i]];
       let url = getListURLFromListID(keys[i]);
 
       var skip = false;
       if(url.includes("0_0_0") || i == 12 || i == 20 || i == 22) skip = true;
 
-      console.log("LOADING LIST", lists[keys[i]].name, i, "/", keys.length, keys[i], (url != keys[i] ? url : "") );
+      console.log("LOADING LIST", list.name, i, "/", keys.length, keys[i], (url != keys[i] ? url : "") );
 
       if(!skip){
         getJSON(url, function(status, data){
@@ -210,7 +226,7 @@ function getLists(chainId, cb){
           loadList(i+1);
         })
       }else{
-        console.log("SKIPPING", i)
+        console.log("SKIPPING", i, list.name )
         loadList(i+1);
       }
 
